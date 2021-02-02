@@ -1,0 +1,11 @@
+create table route (id serial primary key,
+route_id text not null,
+agency_id text not null,
+route_short_name text not null,
+route_long_name text not null,
+route_desc text null,
+route_type int not null,
+route_url text null,
+route_color text null,
+route_text_color not null,
+route geometry);
