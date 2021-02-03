@@ -114,7 +114,20 @@ def load_trips_for_route(conn,  route_id):
         load_trip(conn, trip)
 
 
+def got_route(conn, route_id):
+    cursor = conn.cursor()
+    sql = '''
+        SELECT * FROM route WHERE route_id = %s;
+        '''
+    cursor.execute(sql, (route_id,))
+    routes = cursor.fetchall()
+    return routes != None and len(routes) > 0
+
+
 def load_route(conn, route):
+    if got_route(conn, route['route_id']):
+        return False
+
     sql = '''
         INSERT INTO route (route_id, agency_id, route_short_name, route_long_name, route_desc, route_type, route_url, route_color, route_text_color)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
@@ -135,6 +148,7 @@ def load_route(conn, route):
 
     load_trips_for_route(conn, route['route_id'])
     conn.commit()
+    return True
 
 
 def load_data(conn):
@@ -147,9 +161,13 @@ def load_data(conn):
             data.status_code, url))
     routes = data.json()['response']
     for route in routes:
-        load_route(conn, route)
-        print('loaded route {} : {}'.format(
-            route['route_short_name'], route['route_long_name']))
+        if load_route(conn, route):
+            print('loaded route {} : {}'.format(
+                route['route_short_name'], route['route_long_name']))
+        else:
+            print('already got route {} : {}'.format(
+                route['route_short_name'], route['route_long_name']))
+
     conn.commit()
     print('loaded {} routes'.format(len(routes)))
 
@@ -157,11 +175,10 @@ def load_data(conn):
 def load_routes():
     conn = psycopg2.connect(dbname="at", user="at", password="at")
 
-    setup_tables(conn)
+    # setup_tables(conn)
 
     load_data(conn)
 
 
 if __name__ == "__main__":
-    print(api_key)
     load_routes()
