@@ -1,4 +1,3 @@
-import json
 import psycopg2
 import requests
 from api_key import api_key

@@ -1,11 +1,13 @@
-create table route (id serial primary key,
-route_id text not null,
-agency_id text not null,
-route_short_name text not null,
-route_long_name text not null,
-route_desc text null,
-route_type int not null,
-route_url text null,
-route_color text null,
-route_text_color not null,
-route geometry);
+CREATE TABLE route (
+    id serial PRIMARY KEY,
+    route_id text NOT NULL,
+    agency_id text NOT NULL,
+    route_short_name text NOT NULL,
+    route_long_name text NOT NULL,
+    route_desc text NULL,
+    route_type int NOT NULL,
+    route_url text NULL,
+    route_color text NULL,
+    route_text_color text NOT NULL,
+    route geometry
+);
