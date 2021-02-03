@@ -41,7 +41,10 @@ def vehicles():
     records = cursor.fetchall()
 
     vehicles = [build_vehicle(record) for record in records]
-    return {'vehicles': vehicles}
+    response = {'vehicles': vehicles}
+    response = flask.jsonify(vehicles)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 def run_server():
