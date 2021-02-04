@@ -21,7 +21,7 @@ def setup_vehicle(conn):
             vehicle_id TEXT NOT NULL,
             latitude double precision NOT NULL,
             longitude double precision NOT NULL,
-            speed double precision NOT NULL,
+            speed double precision NULL,
             bearing double precision NULL,
             timestamp bigint NOT NULL,
             label text NULL,
@@ -60,16 +60,24 @@ def load_vehicle(conn, vehicle):
     actual_vehicle = vehicle_record['vehicle']
     vehicle_position = vehicle_record['position']
 
+    if (
+        (vehicle_position['latitude'] < -90) or
+        (vehicle_position['latitude'] > 90) or
+        (vehicle_position['longitude'] < -180) or
+        (vehicle_position['longitude'] > 180)
+    ):
+        return False
+
     cursor = conn.cursor()
     cursor.execute(sql, (
         vehicle['id'],
         vehicle_position['latitude'],
         vehicle_position['longitude'],
-        vehicle_position['speed'],
+        vehicle_position['speed'] if 'speed' in vehicle_position else None,
         vehicle_position['bearing'] if 'bearing' in vehicle_position else None,
         vehicle_record['timestamp'],
-        actual_vehicle['label'] if 'label' in vehicle_position else None,
-        actual_vehicle['license_plate'] if 'license_plate' in vehicle_position else None,
+        actual_vehicle['label'] if 'label' in actual_vehicle else None,
+        actual_vehicle['license_plate'] if 'license_plate' in actual_vehicle else None,
         vehicle_position['longitude'],
         vehicle_position['latitude'])
     )

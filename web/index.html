@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Leaflet</title>
+    <title>AT-AT - realtime vehicle map</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
@@ -24,26 +24,57 @@
   </body>
   <div id="mapid" style="width: 800px; height: 800px"></div>
   <script>
+    var busIcon = L.icon({
+      iconUrl: 'bus.png',
+      // shadowUrl: 'leaf-shadow.png',
+
+      iconSize: [26, 26], // size of the icon
+      // shadowSize: [50, 64], // size of the shadow
+      iconAnchor: [22, 94], // point of the icon which will correspond to marker's location
+      // shadowAnchor: [4, 62], // the same for the shadow
+      popupAnchor: [-3, -76], // point from which the popup should open relative to the iconAnchor
+    });
+
+    function getVehicleName(vehicle) {
+      if (vehicle.license_plate) {
+        return vehicle.license_plate;
+      }
+      if (vehicle.label) {
+        return vehicle.label;
+      }
+      return vehicle.id;
+    }
+    function getFullVehicleName(vehicle) {
+      let fullName = '';
+      if (vehicle.license_plate) {
+        fullName = fullName + vehicle.license_plate;
+      }
+      fullName = fullName + ':';
+      if (vehicle.label) {
+        fullName = fullName + vehicle.label;
+      }
+      fullName = fullName + ':';
+      return fullName + vehicle.id;
+    }
+    // replace this with a direct call to AT
     function doLoad() {
       fetch('http://localhost:5000/vehicles')
         .then((response) => response.json())
         .then((responseData) => {
-          console.log(responseData);
           //   const stations = responseData.data.stations;
-
-          const layerGroup = L.featureGroup().addTo(mymap);
+          vehicleLayerGroup.clearLayers();
 
           for (let vehicle of responseData) {
             const lat = vehicle.latitude;
             const lon = vehicle.longitude;
-            const name = vehicle.id;
-            layerGroup.addLayer(L.marker([lat, lon]).bindPopup(`Name: ${name}`));
+            const name = getVehicleName(vehicle);
+            // check to see if in bounds of map
+            vehicleLayerGroup.addLayer(L.marker([lat, lon], { icon: busIcon }).bindPopup(`${name}`));
           }
-
-          //mymap.fitBounds(layerGroup.getBounds());
         });
     }
-    var mymap = L.map('mapid').setView([-36.85, 174.76], 10);
+    var mymap = L.map('mapid').setView([-36.85, 174.76], 13);
+    const vehicleLayerGroup = L.featureGroup().addTo(mymap);
 
     L.tileLayer(
       'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw',
@@ -58,21 +89,14 @@
       }
     ).addTo(mymap);
 
-    var geojsonFeature = {
-      type: 'Feature',
-      properties: {
-        name: 'Coors Field',
-        amenity: 'Baseball Stadium',
-        popupContent: 'This is where the Rockies play!',
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [174.76, -36.85], // trap for young players ! long/lat, not lat/long
-      },
-    };
-
-    L.geoJson(geojsonFeature).addTo(mymap);
-
-    doLoad();
+    (function theLoop(i) {
+      setTimeout(function () {
+        doLoad();
+        if (--i) {
+          // If i > 0, keep going
+          theLoop(i); // Call the loop again, and pass it the current value of i
+        }
+      }, 3000);
+    })(10000);
   </script>
 </html>
