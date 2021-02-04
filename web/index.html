@@ -80,7 +80,6 @@
       })
         .then((response) => response.json())
         .then((responseData) => {
-          console.log(responseData);
           vehicleLayerGroup.clearLayers();
 
           for (let record of responseData['response']['entity']) {
@@ -115,7 +114,7 @@
       setTimeout(function () {
         doLoadFromAT();
         theLoop();
-      }, 5000);
+      }, 1000);
     })();
   </script>
 </html>
