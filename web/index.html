@@ -1,6 +1,7 @@
 <html>
   <head>
-    <title>AT-AT - realtime vehicle map</title>
+    <title>AT-AT - real-time Auckland Transport vehicle map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
@@ -18,42 +19,93 @@
       }
     </style>
   </head>
+
   <body>
     <div id="mapid"></div>
   </body>
+
   <script>
-    // define the bus icon
-    var busIcon = L.icon({
+    var blackBusIcon = L.icon({
       iconUrl: 'bus.png',
-      // shadowUrl: 'leaf-shadow.png',
-      iconSize: [26, 26], // size of the icon
-      // shadowSize: [50, 64], // size of the shadow
-      iconAnchor: [13, 13], // point of the icon which will correspond to marker's location
-      // shadowAnchor: [4, 62], // the same for the shadow
-      popupAnchor: [-3, -76], // point from which the popup should open relative to the iconAnchor
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [-3, -76],
+    });
+    var redBusIcon = L.icon({
+      iconUrl: 'red-bus.png',
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [-3, -76],
+    });
+    var greenBusIcon = L.icon({
+      iconUrl: 'green-bus.png',
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [-3, -76],
+    });
+    var blueBusIcon = L.icon({
+      iconUrl: 'blue-bus.png',
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [-3, -76],
+    });
+    var greyBusIcon = L.icon({
+      iconUrl: 'grey-bus.png',
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [-3, -76],
     });
 
-    function getVehicleName(vehicle) {
-      if (vehicle.license_plate) {
-        return vehicle.license_plate;
+    function getIconSpeed(vehicle, position) {
+      if (position.speed && position.speed > 0) {
+        return blackBusIcon;
       }
+      if (!position.speed) {
+        return greyBusIcon;
+      }
+      return greyBusIcon;
+    }
+
+    function getIcon(vehicle, position) {
+      if (vehicle.label && vehicle.label != '') {
+        return blueBusIcon;
+      }
+      if (vehicle.license_plate) {
+        return greenBusIcon;
+      }
+      return greyBusIcon;
+    }
+
+    function getSimpleVehicleName(vehicle, position) {
       if (vehicle.label) {
         return vehicle.label;
+      }
+      if (vehicle.license_plate) {
+        return vehicle.license_plate;
       }
       return vehicle.id;
     }
 
-    function getFullVehicleName(vehicle) {
-      let fullName = '';
+    function getVehicleName(vehicle, position) {
+      let name = '';
       if (vehicle.license_plate) {
-        fullName = fullName + vehicle.license_plate;
+        name = name + '<p>Licence Plate : <strong>' + vehicle.license_plate + '</strong></p>';
       }
-      fullName = fullName + ':';
       if (vehicle.label) {
-        fullName = fullName + vehicle.label;
+        name = name + '<p>Label : <strong>' + vehicle.label + '</strong></p>';
       }
-      fullName = fullName + ':';
-      return fullName + vehicle.id;
+      if (vehicle.speed) {
+        name = name + '<p>Speed : <strong>' + fixed(vehicle.speed) + '</strong></p>';
+      }
+      if (vehicle.bearing) {
+        name = name + '<p>Bearing : <strong>' + fixed(vehicle.bearing) + '</strong></p>';
+      }
+      name = name + '<p>id : <strong>' + vehicle.id + '</strong></p>';
+      return name;
+    }
+
+    function fixed(x) {
+      return Number.parseFloat(x).toFixed(2);
     }
 
     function doLoad() {
@@ -66,7 +118,12 @@
             const lat = vehicle.latitude;
             const lon = vehicle.longitude;
             const name = getVehicleName(vehicle);
-            vehicleLayerGroup.addLayer(L.marker([lat, lon], { icon: busIcon }).bindPopup(`${name}`));
+            let icon = getIcon(vehicle, position);
+            vehicleLayerGroup.addLayer(
+              L.marker([lat, lon], {
+                icon: blackBusIcon,
+              }).bindPopup(`${name}`)
+            );
           }
         });
     }
@@ -87,14 +144,20 @@
             let position = record['vehicle']['position'];
             const lat = position.latitude;
             const lon = position.longitude;
-            const name = getFullVehicleName(vehicle);
-            vehicleLayerGroup.addLayer(L.marker([lat, lon], { icon: busIcon }).bindPopup(`${name}`));
-            //vehicleLayerGroup.addLayer(L.marker([lat, lon]).bindPopup(`${name}`));
+            const popup = getVehicleName(vehicle, position);
+            const title = getSimpleVehicleName(vehicle, position);
+            let icon = getIconSpeed(vehicle, position);
+            vehicleLayerGroup.addLayer(
+              L.marker([lat, lon], {
+                icon: blackBusIcon,
+                title: title,
+              }).bindPopup(`${popup}`)
+            );
           }
         });
     }
 
-    var mymap = L.map('mapid').setView([-36.85, 174.76], 13);
+    var mymap = L.map('mapid').setView([-36.85, 174.76], 15);
     const vehicleLayerGroup = L.featureGroup().addTo(mymap);
 
     L.tileLayer(
