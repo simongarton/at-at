@@ -1,1 +1,1 @@
-python -m SimpleHTTPServer 83
+python3 -m http.server 83
